@@ -4,9 +4,11 @@ Free, local-first analyzer for Claude Code spend: correct token accounting,
 cache forensics, task-type attribution, and invoice reconciliation — all from
 the JSONL transcripts Claude Code already writes to `~/.claude/projects`.
 
-**Status: Phase 1 bootstrap (Issue 0).** The repo scaffold, agent constitution,
-issue specs, and golden fixtures are in place. The CLI commands are stubs until
-their issues land — see `docs/issues/`.
+**Status: Phase 1 implemented (Issues 0–10), human gates pending.** All six
+CLI commands work end to end. Before trusting any dollar figure: the pricing
+snapshot (`pricing/2026-07.yaml`) is marked UNVERIFIED until hand-checked
+against Anthropic's pricing page, and the reconcile connector needs its
+real-account run. See the human gates in `docs/issues/`.
 
 ## Quickstart
 

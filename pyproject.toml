@@ -14,9 +14,13 @@ license = { text = "MIT" }
 dependencies = ["PyYAML>=6"]
 
 [project.optional-dependencies]
+# duckdb: the insight-lab query layer over canonical events (Issue 10,
+# docs/spec.md §10) — only scripts/build_lab.py imports it.
+lab = ["duckdb>=1"]
 dev = [
     "pytest>=8",
     "ruff>=0.5",
+    "duckdb>=1",
 ]
 
 [project.scripts]

@@ -10,9 +10,7 @@ corpus:
 	python3 scripts/anonymize.py
 
 lab:
-	@echo "make lab: not implemented yet — lands with Issue 10 (docs/issues/issue-10.md)."
-	@exit 1
+	python3 scripts/build_lab.py
 
 audit:
-	@echo "make audit: not implemented yet — lands with Issue 9 (docs/issues/issue-09.md)."
-	@exit 1
+	python3 -m tokenlens.cli audit
