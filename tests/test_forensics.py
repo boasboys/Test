@@ -45,6 +45,7 @@ def mk_event(turn: int, cc: int, cr: int, inp: int = 5, out: int = 50) -> Event:
         content_types=("text",),
         tool_names=(),
         tool_use_ids=(),
+        bash_commands=(),
         source_file="synthetic",
     )
 

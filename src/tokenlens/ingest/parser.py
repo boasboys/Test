@@ -49,6 +49,10 @@ class Event:
     content_types: tuple[str, ...]
     tool_names: tuple[str, ...]
     tool_use_ids: tuple[str, ...]
+    # First 3 whitespace tokens of each Bash tool_use command, lowercased —
+    # enough to classify testing/git/build turns (Issue 6) without keeping
+    # full command lines. Absent in anonymized corpora (inputs stripped).
+    bash_commands: tuple[str, ...]
     source_file: str
 
     @property
@@ -119,6 +123,7 @@ def _event_from_entry(entry: dict, source_file: str) -> Event | None:
     content_types: list[str] = []
     tool_names: list[str] = []
     tool_use_ids: list[str] = []
+    bash_commands: list[str] = []
     content = message.get("content")
     if isinstance(content, list):
         for block in content:
@@ -131,6 +136,14 @@ def _event_from_entry(entry: dict, source_file: str) -> Event | None:
                     tool_names.append(str(block["name"]))
                 if block.get("id"):
                     tool_use_ids.append(str(block["id"]))
+                if block.get("name") == "Bash":
+                    block_input = block.get("input")
+                    command = (
+                        block_input.get("command") if isinstance(block_input, dict) else None
+                    )
+                    if isinstance(command, str) and command.strip():
+                        head = " ".join(command.strip().lower().split()[:3])
+                        bash_commands.append(head)
 
     uuid = str(entry.get("uuid") or "")
     return Event(
@@ -156,6 +169,7 @@ def _event_from_entry(entry: dict, source_file: str) -> Event | None:
         content_types=tuple(content_types),
         tool_names=tuple(tool_names),
         tool_use_ids=tuple(tool_use_ids),
+        bash_commands=tuple(bash_commands),
         source_file=source_file,
     )
 

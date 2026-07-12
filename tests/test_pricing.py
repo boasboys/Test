@@ -61,6 +61,7 @@ def make_event(
         content_types=("text",),
         tool_names=(),
         tool_use_ids=(),
+        bash_commands=(),
         source_file="synthetic",
     )
 

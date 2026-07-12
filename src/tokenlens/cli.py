@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 from tokenlens import __version__
+from tokenlens.classify import tasks_cmd
 from tokenlens.forensics import cache_cmd
 from tokenlens.ingest import scan
 from tokenlens.pricing import cost_cmd
@@ -19,7 +20,6 @@ DEFAULT_PROJECTS_DIR = Path.home() / ".claude" / "projects"
 DEFAULT_PRICING_DIR = Path("pricing")
 
 _PLANNED_COMMANDS: dict[str, str] = {
-    "tasks": "issue-06",
     "reconcile": "issue-08",
     "audit": "issue-09",
 }
@@ -96,6 +96,27 @@ def main(argv: list[str] | None = None) -> int:
         help="snapshot ID to price bust damage with (default: latest in pricing dir)",
     )
 
+    tasks_parser = subparsers.add_parser(
+        "tasks", help="spend by task type (conversation/exploration/coding/...)"
+    )
+    tasks_parser.add_argument(
+        "path",
+        type=Path,
+        nargs="?",
+        default=DEFAULT_PROJECTS_DIR,
+        help="directory of Claude Code JSONL transcripts (default: ~/.claude/projects)",
+    )
+    tasks_parser.add_argument(
+        "--pricing-dir",
+        type=Path,
+        default=DEFAULT_PRICING_DIR,
+        help="directory of dated pricing snapshots (default: ./pricing)",
+    )
+    tasks_parser.add_argument(
+        "--snapshot",
+        help="snapshot ID to price with (default: latest in pricing dir)",
+    )
+
     for name, issue in _PLANNED_COMMANDS.items():
         subparsers.add_parser(name, help=f"not implemented yet (docs/issues/{issue}.md)")
 
@@ -114,6 +135,8 @@ def main(argv: list[str] | None = None) -> int:
         )
     if args.command == "cost":
         return cost_cmd.run(args.path, args.pricing_dir, args.snapshot)
+    if args.command == "tasks":
+        return tasks_cmd.run(args.path, args.pricing_dir, args.snapshot)
     issue = _PLANNED_COMMANDS[args.command]
     print(
         f"tokenlens {args.command}: not implemented yet — lands with docs/issues/{issue}.md",
