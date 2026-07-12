@@ -16,13 +16,12 @@ from tokenlens.forensics import cache_cmd
 from tokenlens.ingest import scan
 from tokenlens.pricing import cost_cmd
 from tokenlens.reconcile import reconcile_cmd
+from tokenlens.report import audit_cmd
 
 DEFAULT_PROJECTS_DIR = Path.home() / ".claude" / "projects"
 DEFAULT_PRICING_DIR = Path("pricing")
 
-_PLANNED_COMMANDS: dict[str, str] = {
-    "audit": "issue-09",
-}
+_PLANNED_COMMANDS: dict[str, str] = {}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -138,6 +137,32 @@ def main(argv: list[str] | None = None) -> int:
         help="snapshot ID to price with (default: latest in pricing dir)",
     )
 
+    audit_parser = subparsers.add_parser(
+        "audit", help="one-command shareable markdown audit report"
+    )
+    audit_parser.add_argument(
+        "path",
+        type=Path,
+        nargs="?",
+        default=DEFAULT_PROJECTS_DIR,
+        help="directory of Claude Code JSONL transcripts (default: ~/.claude/projects)",
+    )
+    audit_parser.add_argument(
+        "--pricing-dir",
+        type=Path,
+        default=DEFAULT_PRICING_DIR,
+        help="directory of dated pricing snapshots (default: ./pricing)",
+    )
+    audit_parser.add_argument(
+        "--snapshot",
+        help="snapshot ID to price with (default: latest in pricing dir)",
+    )
+    audit_parser.add_argument(
+        "--out",
+        type=Path,
+        help="write the markdown report to this file instead of stdout",
+    )
+
     for name, issue in _PLANNED_COMMANDS.items():
         subparsers.add_parser(name, help=f"not implemented yet (docs/issues/{issue}.md)")
 
@@ -160,6 +185,8 @@ def main(argv: list[str] | None = None) -> int:
         return tasks_cmd.run(args.path, args.pricing_dir, args.snapshot)
     if args.command == "reconcile":
         return reconcile_cmd.run(args.path, args.pricing_dir, args.snapshot)
+    if args.command == "audit":
+        return audit_cmd.run(args.path, args.pricing_dir, args.snapshot, args.out)
     issue = _PLANNED_COMMANDS[args.command]
     print(
         f"tokenlens {args.command}: not implemented yet — lands with docs/issues/{issue}.md",

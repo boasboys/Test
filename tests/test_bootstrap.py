@@ -27,10 +27,11 @@ def test_package_imports():
     assert tokenlens.__version__
 
 
-def test_cli_stub_commands_exit_2(capsys):
-    for command in ("audit",):
-        assert cli.main([command]) == 2
-        assert "not implemented" in capsys.readouterr().err
+def test_cli_without_command_prints_help(capsys):
+    assert cli.main([]) == 2
+    out = capsys.readouterr().out
+    for command in ("scan", "cost", "cache", "tasks", "reconcile", "audit"):
+        assert command in out
 
 
 def test_anonymizer_strips_content_keeps_usage(tmp_path):
