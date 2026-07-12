@@ -80,6 +80,21 @@ def main(argv: list[str] | None = None) -> int:
         default=DEFAULT_PROJECTS_DIR,
         help="directory of Claude Code JSONL transcripts (default: ~/.claude/projects)",
     )
+    cache_parser.add_argument(
+        "--triggers",
+        action="store_true",
+        help="attribute each bust to a trigger and price the damage (Issue 5)",
+    )
+    cache_parser.add_argument(
+        "--pricing-dir",
+        type=Path,
+        default=DEFAULT_PRICING_DIR,
+        help="directory of dated pricing snapshots (default: ./pricing)",
+    )
+    cache_parser.add_argument(
+        "--snapshot",
+        help="snapshot ID to price bust damage with (default: latest in pricing dir)",
+    )
 
     for name, issue in _PLANNED_COMMANDS.items():
         subparsers.add_parser(name, help=f"not implemented yet (docs/issues/{issue}.md)")
@@ -91,7 +106,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "scan":
         return scan.run(args.path, fanout=args.fanout)
     if args.command == "cache":
-        return cache_cmd.run(args.path)
+        return cache_cmd.run(
+            args.path,
+            triggers=args.triggers,
+            pricing_dir=args.pricing_dir,
+            snapshot_id=args.snapshot,
+        )
     if args.command == "cost":
         return cost_cmd.run(args.path, args.pricing_dir, args.snapshot)
     issue = _PLANNED_COMMANDS[args.command]

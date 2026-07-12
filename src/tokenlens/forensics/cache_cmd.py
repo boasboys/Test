@@ -12,7 +12,8 @@ from tokenlens.forensics.health import (
     detect_busts,
 )
 from tokenlens.ingest.accounting import dedup_last_wins
-from tokenlens.ingest.parser import Event, parse_dir
+from tokenlens.ingest.parser import Event, ScanResult, parse_dir
+from tokenlens.pricing.engine import Snapshot
 from tokenlens.render import format_table
 
 # Histogram buckets aligned to the reference thresholds so the 85% / 92%
@@ -80,9 +81,75 @@ def render_cache(events: list[Event]) -> str:
     return "\n".join(lines)
 
 
-def run(path: Path) -> int:
+def render_triggers(result: ScanResult, snapshot: Snapshot) -> str:
+    from decimal import Decimal
+
+    from tokenlens.forensics.attribution import (
+        INVESTIGATE_UNKNOWN_RATE,
+        TRIGGERS,
+        attribute_all,
+        unknown_rate,
+    )
+
+    attributions = attribute_all(result, snapshot)
+    rows: list[list[str]] = []
+    for trigger in TRIGGERS:
+        matching = [a for a in attributions if a.trigger == trigger]
+        if not matching:
+            continue
+        total = sum((a.damage_usd for a in matching), Decimal(0))
+        rows.append(
+            [trigger, str(len(matching)), f"${total:.4f}", f"${total / len(matching):.4f}"]
+        )
+
+    rate = unknown_rate(attributions)
+    lines = [
+        f"Bust trigger attribution — snapshot {snapshot.snapshot_id!r}"
+        + ("" if snapshot.verified else " (UNVERIFIED — human gate pending)"),
+        "",
+        format_table(["trigger", "busts", "damage", "avg"], rows)
+        if rows
+        else "(no bust events detected)",
+        "",
+        f"unknown rate: {rate:.0%}"
+        + (
+            "  !! above 40% — open an investigation issue (docs/issues/issue-05.md)"
+            if rate > INVESTIGATE_UNKNOWN_RATE
+            else ""
+        ),
+    ]
+    return "\n".join(lines)
+
+
+def run(
+    path: Path,
+    triggers: bool = False,
+    pricing_dir: Path | None = None,
+    snapshot_id: str | None = None,
+) -> int:
     if not path.is_dir():
         print(f"tokenlens cache: not a directory: {path}")
         return 1
-    print(render_cache(parse_dir(path).events))
+    result = parse_dir(path)
+    print(render_cache(result.events))
+    if triggers:
+        from tokenlens.pricing.engine import (
+            SnapshotError,
+            UnknownModelError,
+            latest_snapshot,
+            load_snapshot,
+        )
+
+        pricing = pricing_dir if pricing_dir is not None else Path("pricing")
+        try:
+            snapshot = (
+                load_snapshot(pricing / f"{snapshot_id}.yaml")
+                if snapshot_id
+                else latest_snapshot(pricing)
+            )
+            print()
+            print(render_triggers(result, snapshot))
+        except (SnapshotError, UnknownModelError) as exc:
+            print(f"tokenlens cache: {exc}")
+            return 1
     return 0

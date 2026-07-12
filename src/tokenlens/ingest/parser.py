@@ -9,7 +9,7 @@ skip, count, report (CLAUDE.md invariant 6).
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
@@ -70,6 +70,11 @@ class SessionMeta:
     is_sidechain: bool = False
     agent_id: str | None = None
     parent_tool_use_id: str | None = None
+    # Bust-attribution evidence (Issue 5) — timestamps of lines carrying an
+    # image content block / a compact marker. Images usually arrive in user
+    # or tool_result lines, never in usage-bearing assistant lines.
+    image_timestamps: list[str] = field(default_factory=list)
+    compact_timestamps: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -155,6 +160,19 @@ def _event_from_entry(entry: dict, source_file: str) -> Event | None:
     )
 
 
+def _contains_image(content: object) -> bool:
+    if not isinstance(content, list):
+        return False
+    for block in content:
+        if not isinstance(block, dict):
+            continue
+        if block.get("type") == "image":
+            return True
+        if block.get("type") == "tool_result" and _contains_image(block.get("content")):
+            return True
+    return False
+
+
 def _update_meta(meta: dict[str, SessionMeta], entry: dict) -> None:
     session_id = entry.get("sessionId")
     if not session_id:
@@ -166,6 +184,13 @@ def _update_meta(meta: dict[str, SessionMeta], entry: dict) -> None:
         record.agent_id = str(entry["agentId"])
     if record.parent_tool_use_id is None and entry.get("parentToolUseId"):
         record.parent_tool_use_id = str(entry["parentToolUseId"])
+    timestamp = str(entry.get("timestamp") or "")
+    if timestamp:
+        message = entry.get("message")
+        if isinstance(message, dict) and _contains_image(message.get("content")):
+            record.image_timestamps.append(timestamp)
+        if entry.get("isCompactSummary") or entry.get("subtype") == "compact_boundary":
+            record.compact_timestamps.append(timestamp)
 
 
 def parse_file(
