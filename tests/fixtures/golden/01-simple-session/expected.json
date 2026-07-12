@@ -1,0 +1,34 @@
+{
+  "fixture": "01-simple-session",
+  "description": "Healthy single session, no duplicates. One malformed line (skip+count). Turn 1 exercises the 5m/1h cache-creation split.",
+  "line_count": 7,
+  "malformed_lines": 1,
+  "events_raw": 3,
+  "events_deduped": 3,
+  "totals_raw": {
+    "input_tokens": 15,
+    "cache_creation_input_tokens": 13250,
+    "cache_read_input_tokens": 24800,
+    "output_tokens": 645
+  },
+  "totals_deduped": {
+    "input_tokens": 15,
+    "cache_creation_input_tokens": 13250,
+    "cache_read_input_tokens": 24800,
+    "output_tokens": 645
+  },
+  "cache_creation_split_deduped": {
+    "ephemeral_5m": 11250,
+    "ephemeral_1h": 2000
+  },
+  "models": [
+    "claude-sonnet-4-20250514"
+  ],
+  "versions": [
+    "1.0.44"
+  ],
+  "sessions": [
+    "f1000000-0000-4000-8000-000000000001"
+  ],
+  "bust_events": []
+}

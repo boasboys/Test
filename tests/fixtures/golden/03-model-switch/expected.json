@@ -1,0 +1,38 @@
+{
+  "fixture": "03-model-switch",
+  "description": "Model switches sonnet\u2192opus at turn 4: cache_read drops to 0 mid-session and cache_creation re-pays the full prefix. Exactly 1 bust event, trigger = model_change. Timestamp gaps are all 45s, so TTL expiry is not a confound.",
+  "line_count": 12,
+  "malformed_lines": 0,
+  "events_raw": 6,
+  "events_deduped": 6,
+  "totals_raw": {
+    "input_tokens": 30,
+    "cache_creation_input_tokens": 30350,
+    "cache_read_input_tokens": 58650,
+    "output_tokens": 1185
+  },
+  "totals_deduped": {
+    "input_tokens": 30,
+    "cache_creation_input_tokens": 30350,
+    "cache_read_input_tokens": 58650,
+    "output_tokens": 1185
+  },
+  "models": [
+    "claude-opus-4-20250514",
+    "claude-sonnet-4-20250514"
+  ],
+  "versions": [
+    "1.0.44"
+  ],
+  "sessions": [
+    "f3000000-0000-4000-8000-000000000003"
+  ],
+  "bust_events": [
+    {
+      "session_id": "f3000000-0000-4000-8000-000000000003",
+      "turn": 4,
+      "message_id": "msg_f3_a4",
+      "trigger": "model_change"
+    }
+  ]
+}

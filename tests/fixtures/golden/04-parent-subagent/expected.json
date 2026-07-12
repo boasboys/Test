@@ -1,0 +1,44 @@
+{
+  "fixture": "04-parent-subagent",
+  "description": "Parent session spawns a Haiku sub-agent via a Task tool_use; child joins back via parentToolUseId/agentId. Family total must equal the sum of deduped events \u2014 no double count.",
+  "line_count": 8,
+  "malformed_lines": 0,
+  "events_raw": 4,
+  "events_deduped": 4,
+  "totals_raw": {
+    "input_tokens": 20,
+    "cache_creation_input_tokens": 26100,
+    "cache_read_input_tokens": 25000,
+    "output_tokens": 730
+  },
+  "totals_deduped": {
+    "input_tokens": 20,
+    "cache_creation_input_tokens": 26100,
+    "cache_read_input_tokens": 25000,
+    "output_tokens": 730
+  },
+  "models": [
+    "claude-haiku-4-5-20251001",
+    "claude-sonnet-4-20250514"
+  ],
+  "versions": [
+    "1.0.44"
+  ],
+  "sessions": [
+    "f4000000-0000-4000-8000-00000000004a",
+    "f4000000-0000-4000-8000-00000000004b"
+  ],
+  "bust_events": [],
+  "lineage": {
+    "parent_session": "f4000000-0000-4000-8000-00000000004a",
+    "child_session": "f4000000-0000-4000-8000-00000000004b",
+    "parent_tool_use_id": "toolu_f4_task1",
+    "agent_id": "agent-f4-child",
+    "family_totals_deduped": {
+      "input_tokens": 20,
+      "cache_creation_input_tokens": 26100,
+      "cache_read_input_tokens": 25000,
+      "output_tokens": 730
+    }
+  }
+}

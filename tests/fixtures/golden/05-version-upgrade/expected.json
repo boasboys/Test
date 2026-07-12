@@ -1,0 +1,38 @@
+{
+  "fixture": "05-version-upgrade",
+  "description": "Claude Code upgrades 1.0.44\u21921.0.51 before turn 3: cache_read drops to 0 and the prefix is re-paid. Exactly 1 bust event, trigger = version_change. Gaps are 45s (TTL not a confound).",
+  "line_count": 8,
+  "malformed_lines": 0,
+  "events_raw": 4,
+  "events_deduped": 4,
+  "totals_raw": {
+    "input_tokens": 20,
+    "cache_creation_input_tokens": 27350,
+    "cache_read_input_tokens": 26600,
+    "output_tokens": 770
+  },
+  "totals_deduped": {
+    "input_tokens": 20,
+    "cache_creation_input_tokens": 27350,
+    "cache_read_input_tokens": 26600,
+    "output_tokens": 770
+  },
+  "models": [
+    "claude-sonnet-4-20250514"
+  ],
+  "versions": [
+    "1.0.44",
+    "1.0.51"
+  ],
+  "sessions": [
+    "f5000000-0000-4000-8000-000000000005"
+  ],
+  "bust_events": [
+    {
+      "session_id": "f5000000-0000-4000-8000-000000000005",
+      "turn": 3,
+      "message_id": "msg_f5_a3",
+      "trigger": "version_change"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+# Lab artifacts (rebuilt / private)
+lab/corpus/raw/
+lab/events.duckdb
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Secrets — never commit API keys
+.env
