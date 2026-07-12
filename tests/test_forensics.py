@@ -43,6 +43,7 @@ def mk_event(turn: int, cc: int, cr: int, inp: int = 5, out: int = 50) -> Event:
         output_tokens=out,
         content_types=("text",),
         tool_names=(),
+        tool_use_ids=(),
         source_file="synthetic",
     )
 

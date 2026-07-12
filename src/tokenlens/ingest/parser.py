@@ -47,6 +47,7 @@ class Event:
     output_tokens: int
     content_types: tuple[str, ...]
     tool_names: tuple[str, ...]
+    tool_use_ids: tuple[str, ...]
     source_file: str
 
     @property
@@ -59,6 +60,18 @@ class Event:
 
 
 @dataclass(slots=True)
+class SessionMeta:
+    """Per-session lineage metadata gathered from ALL lines, including user
+    lines — parentToolUseId typically appears only on a sidechain's first
+    user entry, never on a usage-bearing assistant line (Issue 7)."""
+
+    session_id: str
+    is_sidechain: bool = False
+    agent_id: str | None = None
+    parent_tool_use_id: str | None = None
+
+
+@dataclass(slots=True)
 class ScanResult:
     """All events under a directory plus parse bookkeeping."""
 
@@ -66,6 +79,7 @@ class ScanResult:
     files_scanned: int
     lines_total: int
     malformed_lines: int
+    session_meta: dict[str, SessionMeta]
 
 
 def parse_timestamp(ts: str) -> datetime:
@@ -98,6 +112,7 @@ def _event_from_entry(entry: dict, source_file: str) -> Event | None:
 
     content_types: list[str] = []
     tool_names: list[str] = []
+    tool_use_ids: list[str] = []
     content = message.get("content")
     if isinstance(content, list):
         for block in content:
@@ -105,8 +120,11 @@ def _event_from_entry(entry: dict, source_file: str) -> Event | None:
                 continue
             block_type = str(block.get("type", "unknown"))
             content_types.append(block_type)
-            if block_type in ("tool_use", "server_tool_use") and block.get("name"):
-                tool_names.append(str(block["name"]))
+            if block_type in ("tool_use", "server_tool_use"):
+                if block.get("name"):
+                    tool_names.append(str(block["name"]))
+                if block.get("id"):
+                    tool_use_ids.append(str(block["id"]))
 
     uuid = str(entry.get("uuid") or "")
     return Event(
@@ -130,12 +148,32 @@ def _event_from_entry(entry: dict, source_file: str) -> Event | None:
         output_tokens=_int(usage.get("output_tokens")),
         content_types=tuple(content_types),
         tool_names=tuple(tool_names),
+        tool_use_ids=tuple(tool_use_ids),
         source_file=source_file,
     )
 
 
-def parse_file(path: Path) -> tuple[list[Event], int, int]:
-    """Parse one JSONL file. Returns (events, lines_total, malformed_lines)."""
+def _update_meta(meta: dict[str, SessionMeta], entry: dict) -> None:
+    session_id = entry.get("sessionId")
+    if not session_id:
+        return
+    record = meta.setdefault(str(session_id), SessionMeta(session_id=str(session_id)))
+    if entry.get("isSidechain"):
+        record.is_sidechain = True
+    if record.agent_id is None and entry.get("agentId"):
+        record.agent_id = str(entry["agentId"])
+    if record.parent_tool_use_id is None and entry.get("parentToolUseId"):
+        record.parent_tool_use_id = str(entry["parentToolUseId"])
+
+
+def parse_file(
+    path: Path, meta: dict[str, SessionMeta] | None = None
+) -> tuple[list[Event], int, int]:
+    """Parse one JSONL file. Returns (events, lines_total, malformed_lines).
+
+    When ``meta`` is given, per-session lineage metadata is accumulated into
+    it from every parseable line (not just usage-bearing ones).
+    """
     events: list[Event] = []
     lines_total = malformed = 0
     with path.open(encoding="utf-8") as fh:
@@ -152,6 +190,8 @@ def parse_file(path: Path) -> tuple[list[Event], int, int]:
             if not isinstance(entry, dict):
                 malformed += 1
                 continue
+            if meta is not None:
+                _update_meta(meta, entry)
             event = _event_from_entry(entry, str(path))
             if event is not None:
                 events.append(event)
@@ -160,9 +200,11 @@ def parse_file(path: Path) -> tuple[list[Event], int, int]:
 
 def parse_dir(root: Path) -> ScanResult:
     """Parse every *.jsonl under root (recursive), in stable sorted order."""
-    result = ScanResult(events=[], files_scanned=0, lines_total=0, malformed_lines=0)
+    result = ScanResult(
+        events=[], files_scanned=0, lines_total=0, malformed_lines=0, session_meta={}
+    )
     for path in sorted(root.rglob("*.jsonl")):
-        events, lines_total, malformed = parse_file(path)
+        events, lines_total, malformed = parse_file(path, result.session_meta)
         result.events.extend(events)
         result.files_scanned += 1
         result.lines_total += lines_total

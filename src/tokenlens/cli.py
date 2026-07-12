@@ -42,6 +42,11 @@ def main(argv: list[str] | None = None) -> int:
         default=DEFAULT_PROJECTS_DIR,
         help="directory of Claude Code JSONL transcripts (default: ~/.claude/projects)",
     )
+    scan_parser.add_argument(
+        "--fanout",
+        action="store_true",
+        help="also report sub-agent lineage and fan-out metrics per family",
+    )
 
     cache_parser = subparsers.add_parser(
         "cache", help="per-session cache health, bust events, fleet histogram"
@@ -62,7 +67,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help()
         return 2
     if args.command == "scan":
-        return scan.run(args.path)
+        return scan.run(args.path, fanout=args.fanout)
     if args.command == "cache":
         return cache_cmd.run(args.path)
     issue = _PLANNED_COMMANDS[args.command]

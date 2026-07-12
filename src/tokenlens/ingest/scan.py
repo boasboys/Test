@@ -81,9 +81,46 @@ def render_scan(result: ScanResult) -> str:
     return "\n".join(lines)
 
 
-def run(path: Path) -> int:
+def render_fanout(result: ScanResult) -> str:
+    from tokenlens.ingest.lineage import build_families, fan_out
+
+    families = [fan_out(f) for f in build_families(result)]
+    spawning = [f for f in families if f.subagent_count > 0]
+    rows = [
+        [
+            f.root_session,
+            str(f.subagent_count),
+            fmt_tokens(f.family_tokens),
+            f"{f.subagent_share:.1%}",
+            f"{f.fanout_multiplier:.2f}x" if f.fanout_multiplier is not None else "n/a",
+            f"{f.haiku_share:.1%}",
+        ]
+        for f in spawning
+    ]
+    max_fanout = max((f.subagent_count for f in families), default=0)
+    lines = [
+        "Sub-agent fan-out — token shares (dollar shares land with Issue 3)",
+        "",
+        format_table(
+            ["root session", "subagents", "family tok", "sub share", "multiplier", "haiku"],
+            rows,
+        )
+        if rows
+        else "(no sub-agent families found)",
+        "",
+        f"families: {len(families)}   with subagents: {len(spawning)}   "
+        f"max fan-out: {max_fanout}",
+    ]
+    return "\n".join(lines)
+
+
+def run(path: Path, fanout: bool = False) -> int:
     if not path.is_dir():
         print(f"tokenlens scan: not a directory: {path}")
         return 1
-    print(render_scan(parse_dir(path)))
+    result = parse_dir(path)
+    print(render_scan(result))
+    if fanout:
+        print()
+        print(render_fanout(result))
     return 0
