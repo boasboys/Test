@@ -28,7 +28,7 @@ def test_package_imports():
 
 
 def test_cli_stub_commands_exit_2(capsys):
-    for command in ("scan", "cost", "cache", "tasks", "reconcile", "audit"):
+    for command in ("cost", "cache", "tasks", "reconcile", "audit"):
         assert cli.main([command]) == 2
         assert "not implemented" in capsys.readouterr().err
 
