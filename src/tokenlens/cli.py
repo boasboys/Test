@@ -11,13 +11,13 @@ import sys
 from pathlib import Path
 
 from tokenlens import __version__
+from tokenlens.forensics import cache_cmd
 from tokenlens.ingest import scan
 
 DEFAULT_PROJECTS_DIR = Path.home() / ".claude" / "projects"
 
 _PLANNED_COMMANDS: dict[str, str] = {
     "cost": "issue-03",
-    "cache": "issue-04",
     "tasks": "issue-06",
     "reconcile": "issue-08",
     "audit": "issue-09",
@@ -43,6 +43,17 @@ def main(argv: list[str] | None = None) -> int:
         help="directory of Claude Code JSONL transcripts (default: ~/.claude/projects)",
     )
 
+    cache_parser = subparsers.add_parser(
+        "cache", help="per-session cache health, bust events, fleet histogram"
+    )
+    cache_parser.add_argument(
+        "path",
+        type=Path,
+        nargs="?",
+        default=DEFAULT_PROJECTS_DIR,
+        help="directory of Claude Code JSONL transcripts (default: ~/.claude/projects)",
+    )
+
     for name, issue in _PLANNED_COMMANDS.items():
         subparsers.add_parser(name, help=f"not implemented yet (docs/issues/{issue}.md)")
 
@@ -52,6 +63,8 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     if args.command == "scan":
         return scan.run(args.path)
+    if args.command == "cache":
+        return cache_cmd.run(args.path)
     issue = _PLANNED_COMMANDS[args.command]
     print(
         f"tokenlens {args.command}: not implemented yet — lands with docs/issues/{issue}.md",
