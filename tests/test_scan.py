@@ -17,7 +17,7 @@ SNAPSHOTS = Path(__file__).parent / "snapshots"
 def test_scan_runs_on_full_golden_corpus_without_crashing(capsys):
     assert cli.main(["scan", str(GOLDEN)]) == 0
     out = capsys.readouterr().out
-    assert "RAW/UNCORRECTED" in out
+    assert "CORRECTED token accounting" in out
     # All six sessions (5 fixtures, fixture 4 contributes two) appear.
     for prefix in ("f1", "f2", "f3", "f4", "f5"):
         assert f"{prefix}000000-" in out
@@ -69,9 +69,10 @@ def test_scan_missing_directory_errors_cleanly(tmp_path, capsys):
 
 
 @pytest.mark.parametrize("fixture", ["02-streaming-duplicates"])
-def test_scan_is_labeled_uncorrected_because_duplicates_inflate_totals(fixture, capsys):
-    """Fixture 2's raw output_tokens (755) overcounts the true 530 — the label matters."""
+def test_scan_shows_raw_and_corrected_side_by_side(fixture, capsys):
+    """Issue 2: raw columns are kept — fixture 2's inflated 755 next to the true 530."""
     cli.main(["scan", str(GOLDEN / fixture)])
     out = capsys.readouterr().out
-    assert "755" in out
-    assert "RAW/UNCORRECTED" in out
+    assert "755" in out  # raw (uncorrected) output_tokens
+    assert "530" in out  # corrected output_tokens
+    assert "dedup rate: 50.0%" in out

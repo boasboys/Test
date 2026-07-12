@@ -1,7 +1,9 @@
-"""`tokenlens scan` — per-session table of raw token totals (Issue 1).
+"""`tokenlens scan` — per-session table of token totals (Issues 1, 2).
 
-Output is RAW/UNCORRECTED: streaming duplicates are NOT deduplicated here,
-so totals overcount. Issue 2 layers corrected accounting on top.
+Per-session numbers are CORRECTED: streaming duplicates collapsed by
+last-wins dedup on (message_id, request_id) — CLAUDE.md invariant 5. Raw
+(uncorrected) counts are kept alongside for comparison, and the corpus-wide
+dedup rate is reported.
 """
 
 from __future__ import annotations
@@ -9,22 +11,24 @@ from __future__ import annotations
 from collections import defaultdict
 from pathlib import Path
 
-from tokenlens.ingest.parser import Event, ScanResult, parse_dir, parse_timestamp
+from tokenlens.ingest.accounting import dedup_last_wins, dedup_rate, stream_totals
+from tokenlens.ingest.parser import STREAMS, Event, ScanResult, parse_dir, parse_timestamp
 from tokenlens.render import fmt_duration, fmt_tokens, format_table
 
 
-def _session_row(session_id: str, events: list[Event]) -> list[str]:
-    ordered = sorted(events, key=lambda e: e.timestamp)
+def _session_row(session_id: str, raw: list[Event], corrected: list[Event]) -> list[str]:
+    ordered = sorted(raw, key=lambda e: e.timestamp)
     first, last = parse_timestamp(ordered[0].timestamp), parse_timestamp(ordered[-1].timestamp)
+    totals = stream_totals(corrected)
     return [
         session_id,
-        str(len(events)),
-        fmt_tokens(sum(e.input_tokens for e in events)),
-        fmt_tokens(sum(e.cache_creation_tokens for e in events)),
-        fmt_tokens(sum(e.cache_read_tokens for e in events)),
-        fmt_tokens(sum(e.output_tokens for e in events)),
-        ",".join(sorted({e.model for e in events})),
-        ",".join(sorted({e.version for e in events})),
+        f"{len(raw)}>{len(corrected)}",
+        fmt_tokens(totals["input_tokens"]),
+        fmt_tokens(totals["cache_creation_tokens"]),
+        fmt_tokens(totals["cache_read_tokens"]),
+        fmt_tokens(totals["output_tokens"]),
+        ",".join(sorted({e.model for e in corrected})),
+        ",".join(sorted({e.version for e in corrected})),
         fmt_duration((last - first).total_seconds()),
     ]
 
@@ -37,7 +41,7 @@ def render_scan(result: ScanResult) -> str:
     sessions = sorted(by_session.items(), key=lambda kv: min(e.timestamp for e in kv[1]))
     headers = [
         "session",
-        "events",
+        "raw>cor",
         "input",
         "cache_w",
         "cache_r",
@@ -46,16 +50,32 @@ def render_scan(result: ScanResult) -> str:
         "versions",
         "duration",
     ]
-    rows = [_session_row(sid, events) for sid, events in sessions]
+    rows = [_session_row(sid, events, dedup_last_wins(events)) for sid, events in sessions]
+
+    corrected_all = dedup_last_wins(result.events)
+    raw_totals = stream_totals(result.events)
+    corrected_totals = stream_totals(corrected_all)
+    rate = dedup_rate(len(result.events), len(corrected_all))
+
+    totals_table = format_table(
+        ["corpus totals", "input", "cache_w", "cache_r", "output~"],
+        [
+            ["raw (uncorrected)"] + [fmt_tokens(raw_totals[s]) for s in STREAMS],
+            ["corrected (dedup)"] + [fmt_tokens(corrected_totals[s]) for s in STREAMS],
+        ],
+    )
 
     lines = [
-        "RAW/UNCORRECTED — streaming duplicates not deduplicated (Issue 2)",
+        "CORRECTED token accounting — last-wins dedup by (message_id, request_id)",
         "",
         format_table(headers, rows) if rows else "(no usage-bearing events found)",
         "",
+        totals_table,
+        "",
         f"files: {result.files_scanned}   lines: {result.lines_total}   "
         f"malformed (skipped): {result.malformed_lines}",
-        f"events (raw): {len(result.events)}   sessions: {len(sessions)}",
+        f"events: {len(result.events)} raw > {len(corrected_all)} corrected   "
+        f"dedup rate: {rate:.1%}",
         "~ output_tokens are streaming placeholders — treat as estimates",
     ]
     return "\n".join(lines)

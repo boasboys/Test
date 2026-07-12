@@ -1,9 +1,14 @@
-RAW/UNCORRECTED — streaming duplicates not deduplicated (Issue 2)
+CORRECTED token accounting — last-wins dedup by (message_id, request_id)
 
-session                               events  input  cache_w  cache_r  output~  models                    versions  duration
-------------------------------------  ------  -----  -------  -------  -------  ------------------------  --------  --------
-f1000000-0000-4000-8000-000000000001  3       15     13,250   24,800   645      claude-sonnet-4-20250514  1.0.44    3m00s
+session                               raw>cor  input  cache_w  cache_r  output~  models                    versions  duration
+------------------------------------  -------  -----  -------  -------  -------  ------------------------  --------  --------
+f1000000-0000-4000-8000-000000000001  3>3      15     13,250   24,800   645      claude-sonnet-4-20250514  1.0.44    3m00s
+
+corpus totals      input  cache_w  cache_r  output~
+-----------------  -----  -------  -------  -------
+raw (uncorrected)  15     13,250   24,800   645
+corrected (dedup)  15     13,250   24,800   645
 
 files: 1   lines: 7   malformed (skipped): 1
-events (raw): 3   sessions: 1
+events: 3 raw > 3 corrected   dedup rate: 0.0%
 ~ output_tokens are streaming placeholders — treat as estimates
