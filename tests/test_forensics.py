@@ -41,6 +41,7 @@ def mk_event(turn: int, cc: int, cr: int, inp: int = 5, out: int = 50) -> Event:
         cache_creation_1h=0,
         cache_read_tokens=cr,
         output_tokens=out,
+        service_tier="standard",
         content_types=("text",),
         tool_names=(),
         tool_use_ids=(),

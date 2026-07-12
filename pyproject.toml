@@ -9,7 +9,9 @@ description = "Free, local-first analyzer for Claude Code spend: correct token a
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-dependencies = []
+# PyYAML: pricing snapshots are dated YAML files per docs/spec.md §3 — loaded
+# exclusively via yaml.safe_load in src/tokenlens/pricing/engine.py.
+dependencies = ["PyYAML>=6"]
 
 [project.optional-dependencies]
 dev = [

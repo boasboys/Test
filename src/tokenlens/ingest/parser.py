@@ -45,6 +45,7 @@ class Event:
     cache_creation_1h: int
     cache_read_tokens: int
     output_tokens: int
+    service_tier: str
     content_types: tuple[str, ...]
     tool_names: tuple[str, ...]
     tool_use_ids: tuple[str, ...]
@@ -146,6 +147,7 @@ def _event_from_entry(entry: dict, source_file: str) -> Event | None:
         cache_creation_1h=cc_1h,
         cache_read_tokens=_int(usage.get("cache_read_input_tokens")),
         output_tokens=_int(usage.get("output_tokens")),
+        service_tier=str(usage.get("service_tier") or "standard"),
         content_types=tuple(content_types),
         tool_names=tuple(tool_names),
         tool_use_ids=tuple(tool_use_ids),

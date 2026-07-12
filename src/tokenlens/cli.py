@@ -13,11 +13,12 @@ from pathlib import Path
 from tokenlens import __version__
 from tokenlens.forensics import cache_cmd
 from tokenlens.ingest import scan
+from tokenlens.pricing import cost_cmd
 
 DEFAULT_PROJECTS_DIR = Path.home() / ".claude" / "projects"
+DEFAULT_PRICING_DIR = Path("pricing")
 
 _PLANNED_COMMANDS: dict[str, str] = {
-    "cost": "issue-03",
     "tasks": "issue-06",
     "reconcile": "issue-08",
     "audit": "issue-09",
@@ -48,6 +49,27 @@ def main(argv: list[str] | None = None) -> int:
         help="also report sub-agent lineage and fan-out metrics per family",
     )
 
+    cost_parser = subparsers.add_parser(
+        "cost", help="per-session dollar costs from a dated pricing snapshot"
+    )
+    cost_parser.add_argument(
+        "path",
+        type=Path,
+        nargs="?",
+        default=DEFAULT_PROJECTS_DIR,
+        help="directory of Claude Code JSONL transcripts (default: ~/.claude/projects)",
+    )
+    cost_parser.add_argument(
+        "--pricing-dir",
+        type=Path,
+        default=DEFAULT_PRICING_DIR,
+        help="directory of dated pricing snapshots (default: ./pricing)",
+    )
+    cost_parser.add_argument(
+        "--snapshot",
+        help="snapshot ID to price with, e.g. 2026-07 (default: latest in pricing dir)",
+    )
+
     cache_parser = subparsers.add_parser(
         "cache", help="per-session cache health, bust events, fleet histogram"
     )
@@ -70,6 +92,8 @@ def main(argv: list[str] | None = None) -> int:
         return scan.run(args.path, fanout=args.fanout)
     if args.command == "cache":
         return cache_cmd.run(args.path)
+    if args.command == "cost":
+        return cost_cmd.run(args.path, args.pricing_dir, args.snapshot)
     issue = _PLANNED_COMMANDS[args.command]
     print(
         f"tokenlens {args.command}: not implemented yet — lands with docs/issues/{issue}.md",

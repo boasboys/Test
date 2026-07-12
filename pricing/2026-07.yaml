@@ -1,0 +1,49 @@
+# tokenlens pricing snapshot — valid for July 2026
+#
+# LOAD-BEARING (CLAUDE.md invariant 1): agents never edit this file.
+# HUMAN GATE (docs/issues/issue-03.md): every value below must be hand-verified
+# against https://platform.claude.com/docs/en/pricing before any $ figure from
+# this snapshot is trusted. Flip `verified` to true and fill in the verifier
+# fields when done. Snapshots are append-only: price changes get a NEW dated
+# file, never an edit here.
+#
+# Prices are USD per million tokens (MTok), base input/output rates.
+# Multipliers apply to the base INPUT rate: cache_write_5m/1h for cache
+# creation by TTL, cache_read for cache hits. batch applies to everything.
+# NOT yet modeled (no occurrences in corpus; propose in PR when needed):
+# inference_geo and long-context premiums.
+
+snapshot_id: "2026-07"
+source: "LiteLLM pricing table, cross-checked against Anthropic model docs (claude-api skill cache 2026-06-24)"
+verified: false
+verified_by: null
+verified_date: null
+
+multipliers:
+  cache_write_5m: 1.25
+  cache_write_1h: 2.0
+  cache_read: 0.10
+  batch: 0.50
+
+models:
+  # Current generation
+  claude-fable-5: { input_per_mtok: 10.00, output_per_mtok: 50.00 }
+  claude-opus-4-8: { input_per_mtok: 5.00, output_per_mtok: 25.00 }
+  claude-opus-4-7: { input_per_mtok: 5.00, output_per_mtok: 25.00 }
+  claude-opus-4-6: { input_per_mtok: 5.00, output_per_mtok: 25.00 }
+  # Sonnet 5 introductory pricing ($2/$10) runs through 2026-08-31; standard
+  # is $3/$15. This July snapshot carries the intro rate — the 2026-09
+  # snapshot must restore the standard rate. VERIFY THIS ONE CAREFULLY.
+  claude-sonnet-5: { input_per_mtok: 2.00, output_per_mtok: 10.00 }
+  claude-sonnet-4-6: { input_per_mtok: 3.00, output_per_mtok: 15.00 }
+  claude-haiku-4-5: { input_per_mtok: 1.00, output_per_mtok: 5.00 }
+  claude-haiku-4-5-20251001: { input_per_mtok: 1.00, output_per_mtok: 5.00 }
+
+  # Legacy / deprecated models that still appear in JSONL transcripts
+  claude-opus-4-5-20251101: { input_per_mtok: 5.00, output_per_mtok: 25.00 }
+  claude-opus-4-5: { input_per_mtok: 5.00, output_per_mtok: 25.00 }
+  claude-opus-4-1-20250805: { input_per_mtok: 15.00, output_per_mtok: 75.00 }
+  claude-opus-4-20250514: { input_per_mtok: 15.00, output_per_mtok: 75.00 }
+  claude-sonnet-4-5-20250929: { input_per_mtok: 3.00, output_per_mtok: 15.00 }
+  claude-sonnet-4-5: { input_per_mtok: 3.00, output_per_mtok: 15.00 }
+  claude-sonnet-4-20250514: { input_per_mtok: 3.00, output_per_mtok: 15.00 }
